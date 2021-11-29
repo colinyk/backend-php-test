@@ -92,15 +92,24 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     }
 
     $user_id = $user['id'];
-    $description = $request->get('description');
+    //SECURITY UPDATE: strip_tags for user entered string
+    $description = strip_tags($request->get('description'));
 
     /**
      * Use parameter binding way to run SQL to avoid SQL injection.
      * Especially for the user input string field
      */
     $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
-    $app['db']->executeUpdate($sql, [$user_id, $description]);
+    $result = $app['db']->executeUpdate($sql, [$user_id, $description]);
 
+    if ($result ){
+        // TASK 4: show ADD confirmation message
+        $app['session']->getFlashBag()->add('message', 'A new TODO <strong>"'.$description.'"</strong> has been added.');
+    }else{
+        // TASK 4: show ADD failed message
+        $app['session']->getFlashBag()->add('error', 'The new TODO <strong>"'.$description.'"</strong> cannot be added.');
+    }
+    
     return $app->redirect('/todo');
 });
 
@@ -117,8 +126,15 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $sql = "DELETE FROM todos "
             . " WHERE id = ? "
             . " AND user_id = ?";
-    $app['db']->executeUpdate($sql, [$id, $user['id']]);
+    $result = $app['db']->executeUpdate($sql, [$id, $user['id']]);
 
+    if ($result ){
+        // TASK 4: show DELETE confirmation message
+        $app['session']->getFlashBag()->add('message', '<strong>#'.$id .'</strong> TODO has been deleted.');
+    }else{
+        // TASK 4: show DELETE failed message
+        $app['session']->getFlashBag()->add('error', '<strong>#'.$id .'</strong> TODO cannot be deleted.');
+    }
     return $app->redirect('/todo');
 });
 

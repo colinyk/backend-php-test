@@ -7,9 +7,9 @@
         <th>#</th>
         <th>User</th>
         <th>Description</th>
-        <th>As JSON</th>
-        <th>Completed</th>
-        <th></th>
+        <th class='text-center'>As JSON</th>
+        <th class='text-center'>Completed</th>
+        <th class='text-center'>Delete</th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
@@ -19,7 +19,7 @@
                        {{ todo.description }}
                     </a>
                 </td>
-                <td>
+                <td class='text-center'>
                     {# TASK 3: view todo in json format #}
                     <a href="{{ app.request.baseurl }}/todo/json/{{ todo.id }}" title='view as JSON'>
                        view
@@ -35,7 +35,7 @@
                         </form>
                     {% endif %}
                 </td>
-                <td>
+                <td class='text-center'>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
@@ -44,15 +44,32 @@
         {% endfor %}
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="3">
+                <td colspan="5">
                     {# TASK 1: make description field required #}
-                    <input type="textbox" name="description" class="small-6 small-center" 
+                    <input type="textbox" name="description" class="small-6 small-center form-control" 
                            required placeholder="Description...">
                 </td>
-                <td>
+                <td colspan="1">
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>
                 </td>
             </form>
+        </tr>
+        <tr>
+            <td colspan="6">
+                {# TASK 4: show add/delete confirmation/failure message #}
+                {% for message in app.session.getFlashBag.get('message') %}
+                    <div class="alert alert-success alert-dismissible" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        {{ message|raw }}
+                    </div>
+                {% endfor %}                
+                {% for error in app.session.getFlashBag.get('error') %}
+                    <div class="alert alert-danger alert-dismissible" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        {{ error|raw }}
+                    </div>
+                {% endfor %}                
+            </td>
         </tr>
     </table>
 </div>
