@@ -65,6 +65,26 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 })
 ->value('id', null);
 
+/**
+ * TASK 3: view todo in JSON format
+ */
+$app->get('/todo/json/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    if ($id){
+        $sql = "SELECT * FROM todos WHERE id = '$id'";
+        $todo = $app['db']->fetchAssoc($sql);
+
+        // reuse the same template to output JSON format 
+        return $app['twig']->render('todo.html', [
+            'todo' => $todo,'json'=> json_encode($todo)
+        ]);
+    }
+})
+->value('id', null);
+
 
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {

@@ -1,12 +1,13 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="col-md-4 col-md-offset-4">
+<div class="col-md-6 col-md-offset-4">
     <h1>Todo List:</h1>
     <table class="table table-striped">
         <th>#</th>
         <th>User</th>
         <th>Description</th>
+        <th>As JSON</th>
         <th>Completed</th>
         <th></th>
         {% for todo in todos %}
@@ -18,14 +19,21 @@
                        {{ todo.description }}
                     </a>
                 </td>
+                <td>
+                    {# TASK 3: view todo in json format #}
+                    <a href="{{ app.request.baseurl }}/todo/json/{{ todo.id }}" title='view as JSON'>
+                       view
+                    </a>
+                </td>
                 <td class="text-center">
+                    {# TASK 2: allow set todo as completed #}
                     {% if todo.completed %}
                       Yes
-                    {%else%}
+                    {% else %}
                         <form method="post" action="{{ app.request.baseurl }}/todo/completed/{{ todo.id }}">
                             <button type="submit" class="btn btn-xs btn-success">No</button>
                         </form>
-                    {%endif%}
+                    {% endif %}
                 </td>
                 <td>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
