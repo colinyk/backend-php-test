@@ -74,17 +74,52 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $user_id = $user['id'];
     $description = $request->get('description');
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    /**
+     * Use parameter binding way to run SQL to avoid SQL injection.
+     * Especially for the user input string field
+     */
+    $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
+    $app['db']->executeUpdate($sql, [$user_id, $description]);
 
     return $app->redirect('/todo');
 });
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    /**
+     * Use parameter binding way to run SQL to avoid SQL injection.
+     * Always check that todo belongs to the current login user
+     */
+    $sql = "DELETE FROM todos "
+            . " WHERE id = ? "
+            . " AND user_id = ?";
+    $app['db']->executeUpdate($sql, [$id, $user['id']]);
 
     return $app->redirect('/todo');
 });
+
+/**
+ * TASK 2: allow to set todo as completed
+ */
+$app->match('/todo/completed/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    
+    /**
+     * Use parameter binding way to run SQL to avoid SQL injection.
+     * Always check that todo belongs to the current login user
+     */
+    $sql = "UPDATE todos "
+            . " SET completed = 1 "
+            . " WHERE id = ? "
+            . " AND user_id = ?";
+    $app['db']->executeUpdate($sql, [$id, $user['id']]);
+
+    return $app->redirect('/todo');
+});
+
