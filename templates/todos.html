@@ -24,7 +24,9 @@
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="3">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                    {# TASK 1: make description field required #}
+                    <input type="textbox" name="description" class="small-6 small-center" 
+                           required placeholder="Description...">
                 </td>
                 <td>
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>

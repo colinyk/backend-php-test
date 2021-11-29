@@ -11,8 +11,9 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 
 
 $app->get('/', function () use ($app) {
+    // fix README.md path issue
     return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
+        'readme' => file_get_contents('../README.md'),
     ]);
 });
 
