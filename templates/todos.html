@@ -43,6 +43,18 @@
             </tr>
         {% endfor %}
         <tr>
+            {# TASK 5: output pagination #}
+            <td colspan="6" class="text-center">
+                {% for p in 1..pages %}
+                    {% if current_page == p %}
+                        <button class="small btn btn-default">{{ p }}</button>
+                    {% else %}
+                        <a href='{{ app.request.baseurl }}/todo?page={{p}}' class="small btn btn-primary">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+            </td>
+        </tr>
+        <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="5">
                     {# TASK 1: make description field required #}

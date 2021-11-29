@@ -3,6 +3,11 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * TASK 5: for paginating the todos list
+ */
+DEFINE('NUMBER_PER_PAGE', 2);
+
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -42,7 +47,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function (Request $request, $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -55,11 +60,32 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        /**
+         * TASK 5: limit data return for each page
+         * get current page and calculate the query record offset
+         */
+        $current_page = $request->get('page');
+        // not using PHP7 feature here in case the program run under PHP5.3
+        // default to page 1
+        $current_page = ($current_page) ? $current_page : 1;
+        $offset = ($current_page-1) * NUMBER_PER_PAGE ;
+        
+        $sql = "SELECT SQL_CALC_FOUND_ROWS * "
+                . " FROM todos "
+                . " WHERE user_id = '${user['id']}' "
+                . " LIMIT " . NUMBER_PER_PAGE
+                . " OFFSET " . $offset;
         $todos = $app['db']->fetchAll($sql);
+        
+        /**
+         * TASK 5: get total number of rows for pagination generation
+         */
+        $total = $app['db']->fetchOne('SELECT FOUND_ROWS()');
 
         return $app['twig']->render('todos.html', [
-            'todos' => $todos,
+            'todos' => $todos, 
+            'current_page'=>$current_page,
+            'pages'=> ceil($total/NUMBER_PER_PAGE)
         ]);
     }
 })
