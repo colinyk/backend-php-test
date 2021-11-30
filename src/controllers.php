@@ -22,16 +22,23 @@ $app->get('/', function () use ($app) {
     ]);
 });
 
-
+/**
+ * TASK EXTRA 2: About security issues
+ * 1. The password should be hashed in table. Should not be plain text at anytime. (not update this implementation here)
+ * 
+ */
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        // TASK EXTRA 2: avoid using string concatenation, should use parameter binding to avoid SQL injection
+        $sql = "SELECT * FROM users WHERE username = ? and password = ?";
+        $user = $app['db']->fetchAssoc($sql, [$username, $password]);
 
         if ($user){
+            // TASK EXTRA 2: always remove password before saving user data to session
+            unset($user['password']);
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
