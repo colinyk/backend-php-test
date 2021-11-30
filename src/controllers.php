@@ -60,6 +60,10 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
+        // TASK 6: allow request json data for VueJs displaying
+        $request_type = $request->get('type');
+        $number_per_page = ($request_type==='json') ? 100 : NUMBER_PER_PAGE;
+        
         /**
          * TASK 5: limit data return for each page
          * get current page and calculate the query record offset
@@ -68,12 +72,12 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
         // not using PHP7 feature here in case the program run under PHP5.3
         // default to page 1
         $current_page = ($current_page) ? $current_page : 1;
-        $offset = ($current_page-1) * NUMBER_PER_PAGE ;
+        $offset = ($current_page-1) * $number_per_page ;
         
         $sql = "SELECT SQL_CALC_FOUND_ROWS * "
                 . " FROM todos "
                 . " WHERE user_id = '${user['id']}' "
-                . " LIMIT " . NUMBER_PER_PAGE
+                . " LIMIT " . $number_per_page
                 . " OFFSET " . $offset;
         $todos = $app['db']->fetchAll($sql);
         
@@ -82,11 +86,18 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
          */
         $total = $app['db']->fetchOne('SELECT FOUND_ROWS()');
 
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos, 
-            'current_page'=>$current_page,
-            'pages'=> ceil($total/NUMBER_PER_PAGE)
-        ]);
+        
+        if ($request_type == 'json'){
+            // TASK 6: allow request json data for VueJs displaying
+            return json_encode($todos);
+        }else{
+            // For php+twig displaying
+            return $app['twig']->render('todos.html', [
+                'todos' => $todos, 
+                'current_page'=>$current_page,
+                'pages'=> ceil($total/NUMBER_PER_PAGE)
+            ]);
+        }
     }
 })
 ->value('id', null);
@@ -140,11 +151,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 });
 
 
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
+$app->match('/todo/delete/{id}', function (Request $request, $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
+    // TASK 6: check if request is from VueJs page
+    $request_type = $request->get('type');
+    
     /**
      * Use parameter binding way to run SQL to avoid SQL injection.
      * Always check that todo belongs to the current login user
@@ -154,23 +167,33 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
             . " AND user_id = ?";
     $result = $app['db']->executeUpdate($sql, [$id, $user['id']]);
 
-    if ($result ){
-        // TASK 4: show DELETE confirmation message
-        $app['session']->getFlashBag()->add('message', '<strong>#'.$id .'</strong> TODO has been deleted.');
+    if ($request_type === 'json'){
+        // TASK 6: response to VueJs page request
+        return json_encode(['code'=>200, 'message'=>'The item has been deleted.']);
     }else{
-        // TASK 4: show DELETE failed message
-        $app['session']->getFlashBag()->add('error', '<strong>#'.$id .'</strong> TODO cannot be deleted.');
+        if ($result ){
+            // TASK 4: show DELETE confirmation message
+            $app['session']->getFlashBag()->add('message', '<strong>#'.$id .'</strong> TODO has been deleted.');
+        }else{
+            // TASK 4: show DELETE failed message
+            $app['session']->getFlashBag()->add('error', '<strong>#'.$id .'</strong> TODO cannot be deleted.');
+        }
+
+        return $app->redirect('/todo');
     }
-    return $app->redirect('/todo');
 });
 
 /**
  * TASK 2: allow to set todo as completed
  */
-$app->match('/todo/completed/{id}', function ($id) use ($app) {
+$app->match('/todo/completed/{id}', function (Request $request, $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
+    
+    // TASK 6: check if request is from VueJs page
+    $request_type = $request->get('type');
+    
     
     /**
      * Use parameter binding way to run SQL to avoid SQL injection.
@@ -182,6 +205,11 @@ $app->match('/todo/completed/{id}', function ($id) use ($app) {
             . " AND user_id = ?";
     $app['db']->executeUpdate($sql, [$id, $user['id']]);
 
-    return $app->redirect('/todo');
+    if ($request_type === 'json'){
+        // TASK 6: response to VueJs page request
+        return json_encode(['code'=>200, 'message'=>'The item has been set as completed.']);
+    }else{
+        // for PHP+twig page
+        return $app->redirect('/todo');
+    }
 });
-
